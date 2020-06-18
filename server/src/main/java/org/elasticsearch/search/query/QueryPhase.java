@@ -18,7 +18,6 @@
  */
 
 package org.elasticsearch.search.query;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.LongPoint;
@@ -56,6 +55,7 @@ import org.elasticsearch.common.util.concurrent.QueueResizingEsThreadPoolExecuto
 import org.elasticsearch.index.IndexSortConfig;
 import org.elasticsearch.index.mapper.DateFieldMapper.DateFieldType;
 import org.elasticsearch.index.mapper.MappedFieldType;
+//import org.elasticsearch.search.DefaultSearchContext;
 import org.elasticsearch.search.DocValueFormat;
 import org.elasticsearch.search.SearchPhase;
 import org.elasticsearch.search.SearchService;
@@ -71,6 +71,7 @@ import org.elasticsearch.search.sort.SortAndFormats;
 import org.elasticsearch.search.suggest.SuggestPhase;
 import org.elasticsearch.tasks.TaskCancelledException;
 import org.elasticsearch.threadpool.ThreadPool;
+//import org.graalvm.compiler.nodes.NodeView;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -85,8 +86,8 @@ import static org.elasticsearch.search.query.QueryCollectorContext.createEarlyTe
 import static org.elasticsearch.search.query.QueryCollectorContext.createFilteredCollectorContext;
 import static org.elasticsearch.search.query.QueryCollectorContext.createMinScoreCollectorContext;
 import static org.elasticsearch.search.query.QueryCollectorContext.createMultiCollectorContext;
-import static org.elasticsearch.search.query.TopDocsCollectorContext.createTopDocsCollectorContext;
 import static org.elasticsearch.search.query.TopDocsCollectorContext.shortcutTotalHitCount;
+import static org.elasticsearch.search.query.TopDocsCollectorContext.createTopDocsCollectorContext;
 
 
 /**
@@ -132,6 +133,7 @@ public class QueryPhase implements SearchPhase {
 
     @Override
     public void execute(SearchContext searchContext) throws QueryPhaseExecutionException {
+        long start = System.currentTimeMillis();
         if (searchContext.hasOnlySuggest()) {
             suggestPhase.execute(searchContext);
             searchContext.queryResult().topDocs(new TopDocsAndMaxScore(
@@ -156,11 +158,16 @@ public class QueryPhase implements SearchPhase {
         suggestPhase.execute(searchContext);
         aggregationPhase.execute(searchContext);
 
+
         if (searchContext.getProfilers() != null) {
-            ProfileShardResult shardResults = SearchProfileShardResults
-                .buildShardResults(searchContext.getProfilers());
-            searchContext.queryResult().profileResults(shardResults);
-        }
+        ProfileShardResult shardResults = SearchProfileShardResults
+            .buildShardResults(searchContext.getProfilers());
+        searchContext.queryResult().profileResults(shardResults);
+    }
+
+        searchContext.queryResult().setQueryWaitTime(start-searchContext.getQueryStartTime());
+        searchContext.queryResult().setQueryExecTime(System.currentTimeMillis()-start);
+
     }
 
     /**
