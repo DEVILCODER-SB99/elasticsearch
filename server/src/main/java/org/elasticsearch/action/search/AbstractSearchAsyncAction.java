@@ -102,6 +102,10 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
     private  long numTask;
     private long totalExecTime;
     private long totalWaitTime;
+    private long totalQueryTime;
+    private long totalFetchTime;
+    private long totalRewriteTime;
+    public long totalAggregationTime;
 
     AbstractSearchAsyncAction(String name, Logger logger, SearchTransportService searchTransportService,
                               BiFunction<String, String, Transport.Connection> nodeIdToConnection,
@@ -168,7 +172,7 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
             // total hits is null in the response if the tracking of total hits is disabled
             boolean withTotalHits = trackTotalHitsUpTo != SearchContext.TRACK_TOTAL_HITS_DISABLED;
             listener.onResponse(new SearchResponse(InternalSearchResponse.empty(withTotalHits), null, 0, 0, 0, buildTookInMillis(),
-                ShardSearchFailure.EMPTY_ARRAY, clusters,totalWaitTime,totalExecTime,numTask));
+                ShardSearchFailure.EMPTY_ARRAY, clusters,totalWaitTime,totalExecTime,numTask,totalQueryTime,totalFetchTime,totalRewriteTime));
             return;
         }
         executePhase(this);
@@ -222,6 +226,10 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
                     QuerySearchResult queryResult = it.queryResult();
                     totalExecTime += queryResult.getQueryExecTime();
                     totalWaitTime += queryResult.getQueryWaitTime();
+                    totalQueryTime += queryResult.getQueryTime() + queryResult.getQueryExecTime() + queryResult.getQueryWaitTime();
+                    totalFetchTime += queryResult.getFetchTime() + queryResult.getFetchExecTime() + queryResult.getFetchWaitTime();
+                    totalRewriteTime += queryResult.getRewriteTime();
+                    totalAggregationTime += queryResult.getBuildAggregationTime()+queryResult.getInitAggregationTime()+queryResult.getCollectAggregationTime();
                 }
             }
         }
@@ -554,7 +562,7 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
                                                        String scrollId,
                                                        ShardSearchFailure[] failures) {
         return new SearchResponse(internalSearchResponse, scrollId, getNumShards(), successfulOps.get(),
-            skippedOps.get(), buildTookInMillis(), failures, clusters,totalWaitTime,totalExecTime,numTask);
+            skippedOps.get(), buildTookInMillis(), failures, clusters,totalWaitTime,totalExecTime,numTask,totalQueryTime,totalFetchTime,totalRewriteTime);
     }
 
     @Override

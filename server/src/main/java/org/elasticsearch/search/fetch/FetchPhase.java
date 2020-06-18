@@ -90,7 +90,7 @@ public class FetchPhase implements SearchPhase {
 
     @Override
     public void execute(SearchContext context) {
-
+        long start = System.currentTimeMillis();
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("{}", new SearchContextSourcePrinter(context));
         }
@@ -186,6 +186,8 @@ public class FetchPhase implements SearchPhase {
         } catch (IOException e) {
             throw ExceptionsHelper.convertToElastic(e);
         }
+        context.queryResult().setFetchWaitTime(start-context.getFetchStartTime());
+        context.queryResult().setFetchExecTime(System.currentTimeMillis()-start);
     }
 
     private int findRootDocumentIfNested(SearchContext context, LeafReaderContext subReaderContext, int subDocId) throws IOException {

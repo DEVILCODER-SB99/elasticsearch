@@ -18,6 +18,7 @@
  */
 package org.elasticsearch.search.aggregations.metrics;
 
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -33,12 +34,14 @@ import java.util.Objects;
 public class InternalAvg extends InternalNumericMetricsAggregation.SingleValue implements Avg {
     private final double sum;
     private final long count;
-
-    public InternalAvg(String name, double sum, long count, DocValueFormat format, List<PipelineAggregator> pipelineAggregators,
+    public final long time;
+    protected static final ParseField Aggregation_Time = new ParseField ("Agg_time");
+    public InternalAvg(String name, double sum, long count,long time, DocValueFormat format, List<PipelineAggregator> pipelineAggregators,
             Map<String, Object> metaData) {
         super(name, pipelineAggregators, metaData);
         this.sum = sum;
         this.count = count;
+        this.time = time;
         this.format = format;
     }
 
@@ -50,6 +53,7 @@ public class InternalAvg extends InternalNumericMetricsAggregation.SingleValue i
         format = in.readNamedWriteable(DocValueFormat.class);
         sum = in.readDouble();
         count = in.readVLong();
+        time = in.readVLong();
     }
 
     @Override
@@ -57,6 +61,7 @@ public class InternalAvg extends InternalNumericMetricsAggregation.SingleValue i
         out.writeNamedWriteable(format);
         out.writeDouble(sum);
         out.writeVLong(count);
+        out.writeVLong(time);
     }
 
     @Override
@@ -67,6 +72,10 @@ public class InternalAvg extends InternalNumericMetricsAggregation.SingleValue i
     @Override
     public double getValue() {
         return sum / count;
+    }
+
+    public long getTime(){
+        return this.time;
     }
 
     double getSum() {
@@ -89,6 +98,7 @@ public class InternalAvg extends InternalNumericMetricsAggregation.SingleValue i
     @Override
     public InternalAvg reduce(List<InternalAggregation> aggregations, ReduceContext reduceContext) {
         CompensatedSum kahanSummation = new CompensatedSum(0, 0);
+        long start = System.currentTimeMillis();
         long count = 0;
         // Compute the sum of double values with Kahan summation algorithm which is more
         // accurate than naive summation.
@@ -97,12 +107,14 @@ public class InternalAvg extends InternalNumericMetricsAggregation.SingleValue i
             count += avg.count;
             kahanSummation.add(avg.sum);
         }
-        return new InternalAvg(getName(), kahanSummation.value(), count, format, pipelineAggregators(), getMetaData());
+        long agg_time = System.currentTimeMillis()-start;
+        return new InternalAvg(getName(), kahanSummation.value(), count, agg_time,format, pipelineAggregators(), getMetaData());
     }
 
     @Override
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         builder.field(CommonFields.VALUE.getPreferredName(), count != 0 ? getValue() : null);
+        builder.field(Aggregation_Time.getPreferredName(),getTime());
         if (count != 0 && format != DocValueFormat.RAW) {
             builder.field(CommonFields.VALUE_AS_STRING.getPreferredName(), format.format(getValue()).toString());
         }

@@ -348,7 +348,9 @@ public class QueryPhase implements SearchPhase {
         }
         QuerySearchResult queryResult = searchContext.queryResult();
         try {
+            long start = System.currentTimeMillis();
             searcher.search(query, queryCollector);
+            searchContext.queryResult().setCollectAggregationTime(System.currentTimeMillis()-start);
         } catch (EarlyTerminatingCollector.EarlyTerminationException e) {
             queryResult.terminatedEarly(true);
         } catch (TimeExceededException e) {
