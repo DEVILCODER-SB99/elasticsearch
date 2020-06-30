@@ -73,15 +73,14 @@ public final class QuerySearchResult extends SearchPhaseResult {
     private long queryWaitTime;
     private long queryExecTime;
     private long queryTime;
-    private long fetchTime;
     private long buildAggregationTime;
     private long fetchExecTime;
-    private long fetchWaitTime;
     private final boolean isNull;
     private long rewriteTime;
     private long rewriteScratch;
     private long initAggregationTime;
     private long collectAggregationTime;
+    private long segments;
 
     public void startRewriteTime() {
         assert rewriteScratch == 0;
@@ -119,62 +118,53 @@ public final class QuerySearchResult extends SearchPhaseResult {
         setSearchShardTarget(shardTarget);
         isNull = false;
     }
-    public long getQueryWaitTime()
-    {
+    public long getQueryWaitTime() {
         return queryWaitTime;
     }
-    public long getQueryExecTime()
-    {
+    public long getQueryExecTime() {
         return queryExecTime;
     }
-    public void setQueryWaitTime(long queryWaitTime)
-    {
+    public void setQueryWaitTime(long queryWaitTime) {
         this.queryWaitTime = queryWaitTime;
     }
-    public void setQueryExecTime(long queryExecTime)
-    {
+    public void setQueryExecTime(long queryExecTime) {
         this.queryExecTime = queryExecTime;
     }
-    public void setBuildAggregationTime(long buildAggregationTime) {this.buildAggregationTime = buildAggregationTime;}
-    public long getBuildAggregationTime() { return buildAggregationTime;}
-    public void setInitAggregationTime(long initAggregationTime) {this.initAggregationTime = initAggregationTime;}
-    public long getInitAggregationTime() { return initAggregationTime;}
-    public void setCollectAggregationTime(long collectAggregationTime) {this.collectAggregationTime = collectAggregationTime;}
-    public long getCollectAggregationTime() { return collectAggregationTime;}
-    public long getFetchWaitTime()
-    {
-        return fetchWaitTime;
+    public void setBuildAggregationTime(long buildAggregationTime) {
+        this.buildAggregationTime = buildAggregationTime;
     }
-    public long getFetchExecTime()
-    {
+    public long getBuildAggregationTime() {
+        return buildAggregationTime;
+    }
+    public void setInitAggregationTime(long initAggregationTime) {
+        this.initAggregationTime = initAggregationTime;
+    }
+    public long getInitAggregationTime() {
+        return initAggregationTime;
+    }
+    public void setCollectAggregationTime(long collectAggregationTime) {
+        this.collectAggregationTime = collectAggregationTime;
+    }
+    public long getCollectAggregationTime() {
+        return collectAggregationTime;
+    }
+    public long getFetchExecTime() {
         return fetchExecTime;
     }
-    public void setFetchWaitTime(long queryWaitTime)
-    {
-        this.queryWaitTime = queryWaitTime;
-    }
-    public void setFetchExecTime(long queryExecTime)
-    {
+    public void setFetchExecTime(long queryExecTime) {
         this.queryExecTime = queryExecTime;
     }
-
-    public void setQueryTime(long queryTime)
-    {
+    public void setQueryTime(long queryTime) {
         this.queryTime = queryTime;
     }
-
-    public long getQueryTime()
-    {
+    public long getQueryTime() {
         return queryTime;
     }
-
-    public long getFetchTime()
-    {
-        return fetchTime;
+    public void setSegments(long segments) {
+        this.segments = segments;
     }
-    public void setFetchTime(long fetchTime)
-    {
-        this.fetchTime = fetchTime;
+    public long getSegments(){
+        return segments;
     }
     private QuerySearchResult(boolean isNull) {
         this.isNull = isNull;

@@ -461,7 +461,6 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
     private QueryFetchSearchResult executeFetchPhase(SearchContext context, long afterQueryTime) {
         try (SearchOperationListenerExecutor executor = new SearchOperationListenerExecutor(context, true, afterQueryTime)){
             shortcutDocIdsToLoad(context);
-            context.setFetchStartTime();
             fetchPhase.execute(context);
             if (fetchPhaseShouldFreeContext(context)) {
                 freeContext(context.id());
@@ -695,9 +694,7 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
             long startQueryPhaseTime = System.currentTimeMillis();
             queryPhase.preProcess(context);
             context.queryResult().setQueryTime(System.currentTimeMillis()-startQueryPhaseTime);
-            long startFetchPhaseTime = System.currentTimeMillis();
             fetchPhase.preProcess(context);
-            context.queryResult().setFetchTime(System.currentTimeMillis()-startFetchPhaseTime);
             // compute the context keep alive
             long keepAlive = defaultKeepAlive;
             if (request.scroll() != null && request.scroll().keepAlive() != null) {

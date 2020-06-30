@@ -186,7 +186,6 @@ public class FetchPhase implements SearchPhase {
         } catch (IOException e) {
             throw ExceptionsHelper.convertToElastic(e);
         }
-        context.queryResult().setFetchWaitTime(start-context.getFetchStartTime());
         context.queryResult().setFetchExecTime(System.currentTimeMillis()-start);
     }
 
