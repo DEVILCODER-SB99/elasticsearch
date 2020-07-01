@@ -61,7 +61,9 @@ public class AggregationPhase implements SearchPhase {
                 context.aggregations().aggregators(aggregators);
                 if (!collectors.isEmpty()) {
                     Collector collector = MultiBucketCollector.wrap(collectors);
+                    long start = System.currentTimeMillis();
                     ((BucketCollector)collector).preCollection();
+                    context.queryResult().setInitAggregationTime(System.currentTimeMillis()-start);
                     if (context.getProfilers() != null) {
                         collector = new InternalProfileCollector(collector, CollectorResult.REASON_AGGREGATION,
                                 // TODO: report on child aggs as well
@@ -77,6 +79,7 @@ public class AggregationPhase implements SearchPhase {
 
     @Override
     public void execute(SearchContext context) {
+        long start = System.currentTimeMillis();
         if (context.aggregations() == null) {
             context.queryResult().aggregations(null);
             return;
@@ -148,6 +151,7 @@ public class AggregationPhase implements SearchPhase {
         // disable aggregations so that they don't run on next pages in case of scrolling
         context.aggregations(null);
         context.queryCollectors().remove(AggregationPhase.class);
+        context.queryResult().setBuildAggregationTime(System.currentTimeMillis()-start);
     }
 
 }

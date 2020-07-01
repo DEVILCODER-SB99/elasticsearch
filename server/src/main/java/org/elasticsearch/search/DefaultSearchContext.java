@@ -24,6 +24,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.FieldDoc;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.elasticsearch.Version;
@@ -260,7 +261,9 @@ final class DefaultSearchContext extends SearchContext {
         this.query = buildFilteredQuery(query);
         if (rewrite) {
             try {
+                queryResult().startRewriteTime();
                 this.query = searcher.rewrite(query);
+                queryResult.stopAndAddRewriteTime();
             } catch (IOException e) {
                 throw new QueryPhaseExecutionException(shardTarget, "Failed to rewrite main query", e);
             }
