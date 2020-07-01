@@ -689,7 +689,9 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
 
             // pre process
             dfsPhase.preProcess(context);
+            long startQueryPhaseTime = System.currentTimeMillis();
             queryPhase.preProcess(context);
+            context.queryResult().setQueryTime(System.currentTimeMillis()-startQueryPhaseTime);
             fetchPhase.preProcess(context);
             // compute the context keep alive
             long keepAlive = defaultKeepAlive;

@@ -67,6 +67,10 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
     private static final ParseField EXEC_TIME = new ParseField("exec_Time");
     private static final ParseField WAIT_TIME = new ParseField("wait_Time");
     private static final ParseField NUM_TASK = new ParseField("num_task");
+    private static final ParseField QUERY_TIME = new ParseField("query_time");
+    private static final ParseField FETCH_TIME = new ParseField("fetch_time");
+    private static final ParseField REWRITE_TIME = new ParseField("rewrite_time");
+    private static final ParseField TOTAL_SEGMENTS = new ParseField("total_segments");
     private static final ParseField TERMINATED_EARLY = new ParseField("terminated_early");
     private static final ParseField NUM_REDUCE_PHASES = new ParseField("num_reduce_phases");
 
@@ -81,6 +85,10 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
     private final long execInMillis;
     private final long waitInMillis;
     private final long numTask;
+    private final long queryInMillis;
+    private final long fetchInMillis;
+    private final long rewriteInMillis;
+    private final long totalSegments;
 
     public SearchResponse(StreamInput in) throws IOException {
         super(in);
@@ -107,10 +115,14 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
         this.waitInMillis = in.readVLong();
         this.execInMillis = in.readVLong();
         this.numTask = in.readVLong();
+        this.queryInMillis = in.readVLong();
+        this.fetchInMillis = in.readVLong();
+        this.rewriteInMillis = in.readVLong();
+        this.totalSegments = in.readVLong();
     }
 
     public SearchResponse(SearchResponseSections internalResponse, String scrollId, int totalShards, int successfulShards,
-                          int skippedShards, long tookInMillis, ShardSearchFailure[] shardFailures, Clusters clusters, long waitInMillis,long execInMillis, long numTask) {
+                          int skippedShards, long tookInMillis, ShardSearchFailure[] shardFailures, Clusters clusters, long waitInMillis,long execInMillis, long numTask,long queryInMillis,long fetchInMillis,long rewriteInMillis,long totalSegments) {
         this.internalResponse = internalResponse;
         this.scrollId = scrollId;
         this.clusters = clusters;
@@ -122,6 +134,10 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
         this.waitInMillis = waitInMillis;
         this.execInMillis = execInMillis;
         this.numTask = numTask;
+        this.queryInMillis = queryInMillis;
+        this.fetchInMillis = fetchInMillis;
+        this.rewriteInMillis = rewriteInMillis;
+        this.totalSegments = totalSegments;
         assert skippedShards <= totalShards : "skipped: " + skippedShards + " total: " + totalShards;
     }
 
@@ -184,6 +200,11 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
         return waitInMillis;
     }
     public long getNumTask(){ return numTask; }
+    public long getQueryTime() {return queryInMillis;}
+    public long getFetchTime() {return fetchInMillis;}
+    public long getRewriteTime(){return rewriteInMillis;}
+    public long getTotalSegments(){return totalSegments;}
+
     /**
      * The total number of shards the search was executed on.
      */
@@ -267,6 +288,10 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
         builder.field(EXEC_TIME.getPreferredName(), execInMillis);
         builder.field(WAIT_TIME.getPreferredName(), waitInMillis);
         builder.field(NUM_TASK.getPreferredName(), numTask);
+        builder.field(QUERY_TIME.getPreferredName(),queryInMillis);
+        builder.field(FETCH_TIME.getPreferredName(),fetchInMillis);
+        builder.field(REWRITE_TIME.getPreferredName(),rewriteInMillis);
+        builder.field(TOTAL_SEGMENTS.getPreferredName(),totalSegments);
         if (isTerminatedEarly() != null) {
             builder.field(TERMINATED_EARLY.getPreferredName(), isTerminatedEarly());
         }
@@ -300,6 +325,10 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
         long waitInMillis = -1;
         long execInMillis = -1;
         long numTask = -1;
+        long queryInMillis = -1;
+        long fetchInMillis = -1;
+        long rewriteInMillis = -1;
+        long totalSegments = -1;
         int successfulShards = -1;
         int totalShards = -1;
         int skippedShards = 0; // 0 for BWC
@@ -316,12 +345,22 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
                     tookInMillis = parser.longValue();
                 } else if (TIMED_OUT.match(currentFieldName, parser.getDeprecationHandler())) {
                     timedOut = parser.booleanValue();
-                } else if(EXEC_TIME.match(currentFieldName, parser.getDeprecationHandler())){
+                }
+                else if(EXEC_TIME.match(currentFieldName, parser.getDeprecationHandler())){
                     execInMillis = parser.longValue();
-                } else if(WAIT_TIME.match(currentFieldName, parser.getDeprecationHandler())) {
+                }
+                else if(WAIT_TIME.match(currentFieldName, parser.getDeprecationHandler())) {
                     waitInMillis = parser.longValue();
                 }else if(NUM_TASK.match(currentFieldName, parser.getDeprecationHandler())) {
                     numTask = parser.longValue();
+                }else if(QUERY_TIME.match(currentFieldName, parser.getDeprecationHandler())) {
+                    queryInMillis = parser.longValue();
+                }else if(FETCH_TIME.match(currentFieldName, parser.getDeprecationHandler())) {
+                    fetchInMillis = parser.longValue();
+                }else if(REWRITE_TIME.match(currentFieldName, parser.getDeprecationHandler())) {
+                    rewriteInMillis = parser.longValue();
+                }else if(TOTAL_SEGMENTS.match(currentFieldName, parser.getDeprecationHandler())) {
+                    totalSegments = parser.longValue();
                 }else if (TERMINATED_EARLY.match(currentFieldName, parser.getDeprecationHandler())) {
                     terminatedEarly = parser.booleanValue();
                 } else if (NUM_REDUCE_PHASES.match(currentFieldName, parser.getDeprecationHandler())) {
@@ -396,7 +435,7 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
         SearchResponseSections searchResponseSections = new SearchResponseSections(hits, aggs, suggest, timedOut, terminatedEarly,
                 profile, numReducePhases);
         return new SearchResponse(searchResponseSections, scrollId, totalShards, successfulShards, skippedShards, tookInMillis,
-                failures.toArray(ShardSearchFailure.EMPTY_ARRAY), clusters,waitInMillis,execInMillis,numTask);
+                failures.toArray(ShardSearchFailure.EMPTY_ARRAY), clusters,waitInMillis,execInMillis,numTask,queryInMillis,fetchInMillis,rewriteInMillis,totalSegments);
     }
 
     @Override
@@ -418,6 +457,10 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
         out.writeVLong(waitInMillis);
         out.writeVLong(execInMillis);
         out.writeVLong(numTask);
+        out.writeVLong(queryInMillis);
+        out.writeVLong(fetchInMillis);
+        out.writeVLong(rewriteInMillis);
+        out.writeVLong(totalSegments);
     }
 
     @Override
@@ -526,6 +569,6 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
         InternalSearchResponse internalSearchResponse = new InternalSearchResponse(searchHits,
             InternalAggregations.EMPTY, null, null, false, null, 0);
         return new SearchResponse(internalSearchResponse, null, 0, 0, 0, tookInMillisSupplier.get(),
-            ShardSearchFailure.EMPTY_ARRAY, clusters,0L,0L,0);
+            ShardSearchFailure.EMPTY_ARRAY, clusters,0L,0L,0,0,0,0,0);
     }
 }
