@@ -630,9 +630,7 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
 
     final SearchContext createAndPutContext(ShardSearchRequest request, SearchShardTask task) throws IOException {
         SearchContext context = createContext(request, task);
-
         onNewContext(context);
-
         boolean success = false;
         try {
             putContext(context);
@@ -732,7 +730,6 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
             searchContext = new DefaultSearchContext(searchContextId, request, shardTarget,
                 searcher, clusterService, indexService, indexShard, bigArrays, threadPool::relativeTimeInMillis, timeout,
                 fetchPhase, lowLevelCancellation, clusterService.state().nodes().getMinNodeVersion());
-
             // we clone the query shard context here just for rewriting otherwise we
             // might end up with incorrect state since we are using now() or script services
             // during rewrite and normalized / evaluate templates etc.
