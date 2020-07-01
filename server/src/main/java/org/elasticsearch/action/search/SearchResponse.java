@@ -82,8 +82,6 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
     private final long waitInMillis;
     private final long numTask;
 
-
-
     public SearchResponse(StreamInput in) throws IOException {
         super(in);
         internalResponse = new InternalSearchResponse(in);
