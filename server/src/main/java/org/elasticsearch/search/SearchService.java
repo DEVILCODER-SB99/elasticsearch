@@ -431,6 +431,7 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
             final long afterQueryTime;
             try (SearchOperationListenerExecutor executor = new SearchOperationListenerExecutor(context)) {
                 contextProcessing(context);
+                context.setQueryStartTime();
                 loadOrExecuteQueryPhase(request, context);
                 if (context.queryResult().hasSearchContext() == false && context.scrollContext() == null) {
                     freeContext(context.id());
@@ -690,7 +691,6 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
             dfsPhase.preProcess(context);
             queryPhase.preProcess(context);
             fetchPhase.preProcess(context);
-
             // compute the context keep alive
             long keepAlive = defaultKeepAlive;
             if (request.scroll() != null && request.scroll().keepAlive() != null) {
@@ -1115,6 +1115,7 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
         IndexShard indexShard = indexService.getShard(request.shardId().getId());
         // we don't want to use the reader wrapper since it could run costly operations
         // and we can afford false positives.
+        final boolean hasRefreshPending = indexShard.hasRefreshPending();
         try (Engine.Searcher searcher = indexShard.acquireCanMatchSearcher()) {
             QueryShardContext context = indexService.newQueryShardContext(request.shardId().id(), searcher,
                 request::nowInMillis, request.getClusterAlias());

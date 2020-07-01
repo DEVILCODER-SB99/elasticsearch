@@ -99,6 +99,17 @@ public abstract class SearchContext extends AbstractRefCounted implements Releas
 
     public abstract boolean isCancelled();
 
+    public long queryStartTime;
+    public void setQueryStartTime()
+    {
+        queryStartTime = System.currentTimeMillis();
+    }
+    public long getQueryStartTime()
+    {
+        return queryStartTime;
+    }
+
+
     @Override
     public final void close() {
         if (closed.compareAndSet(false, true)) { // prevent double closing
@@ -127,7 +138,6 @@ public abstract class SearchContext extends AbstractRefCounted implements Releas
      * @param rewrite if the set query should be rewritten against the searcher returned from {@link #searcher()}
      */
     public abstract void preProcess(boolean rewrite);
-
     /** Automatically apply all required filters to the given query such as
      *  alias filters, types filters, etc. */
     public abstract Query buildFilteredQuery(Query query);
