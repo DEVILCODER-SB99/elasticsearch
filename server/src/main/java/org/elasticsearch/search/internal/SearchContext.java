@@ -181,6 +181,15 @@ public abstract class SearchContext extends AbstractRefCounted implements Releas
         return innerHitsContext;
     }
 
+    public long queryStartTime;
+    public void setQueryStartTime()
+    {
+        queryStartTime = System.currentTimeMillis();
+    }
+    public long getQueryStartTime()
+    {
+        return queryStartTime;
+    }
     public abstract SuggestionSearchContext suggest();
 
     public abstract void suggest(SuggestionSearchContext suggest);
