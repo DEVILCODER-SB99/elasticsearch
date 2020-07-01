@@ -124,6 +124,10 @@ final class SearchResponseMerger {
         long totalWaitTime = 0;
         long totalExecTime = 0;
         int totalNumTask = 0;
+        long totalQueryTime = 0;
+        long totalFetchTime = 0;
+        long totalRewriteTime = 0;
+        long totalNumberOfSegments = 0;
         List<ShardSearchFailure> failures = new ArrayList<>();
         Map<String, ProfileShardResult> profileResults = new HashMap<>();
         List<InternalAggregations> aggs = new ArrayList<>();
@@ -142,7 +146,10 @@ final class SearchResponseMerger {
             totalWaitTime += searchResponse.getWaitTime();
             totalExecTime += searchResponse.getExecTime();
             totalNumTask += searchResponse.getNumTask();
-
+            totalQueryTime+=searchResponse.getQueryTime();
+            totalFetchTime+=searchResponse.getFetchTime();
+            totalRewriteTime+=searchResponse.getRewriteTime();
+            totalNumberOfSegments+=searchResponse.getTotalSegments();
 
             Collections.addAll(failures, searchResponse.getShardFailures());
 
@@ -210,7 +217,7 @@ final class SearchResponseMerger {
         InternalSearchResponse response = new InternalSearchResponse(mergedSearchHits, reducedAggs, suggest, profileShardResults,
             topDocsStats.timedOut, topDocsStats.terminatedEarly, numReducePhases);
         long tookInMillis = searchTimeProvider.buildTookInMillis();
-        return new SearchResponse(response, null, totalShards, successfulShards, skippedShards, tookInMillis, shardFailures, clusters,totalWaitTime,totalExecTime,totalNumTask);
+        return new SearchResponse(response, null, totalShards, successfulShards, skippedShards, tookInMillis, shardFailures, clusters,totalWaitTime,totalExecTime,totalNumTask,totalQueryTime,totalFetchTime,totalRewriteTime,totalNumberOfSegments);
     }
 
     private static final Comparator<ShardSearchFailure> FAILURES_COMPARATOR = new Comparator<ShardSearchFailure>() {
