@@ -163,8 +163,6 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
     public long getAggregationTime(){
         return totalAggregationTime;
     }
-
-
     /**
      * This is the main entry point for a search. This method starts the search execution of the initial phase.
      */
