@@ -44,6 +44,8 @@ import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.internal.ShardSearchRequest;
 import org.elasticsearch.transport.Transport;
 import org.elasticsearch.search.query.QuerySearchResult;
+import org.elasticsearch.search.aggregations.bucket.terms.InternalMappedTerms;
+
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -77,6 +79,11 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
     private  long numTask;
     private long totalExecTime;
     private long totalWaitTime;
+    private long queryTime;
+    private long fetchTime;
+    private long totalRewriteTime;
+    private long totalAggregationTime;
+    private long totalNumberOfSegments;
     /**
      * Used by subclasses to resolve node ids to DiscoveryNodes.
      **/
@@ -155,6 +162,9 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
         return timeProvider.buildTookInMillis();
     }
 
+    public long getAggregationTime(){
+        return totalAggregationTime;
+    }
     /**
      * This is the main entry point for a search. This method starts the search execution of the initial phase.
      */
@@ -168,7 +178,7 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
             // total hits is null in the response if the tracking of total hits is disabled
             boolean withTotalHits = trackTotalHitsUpTo != SearchContext.TRACK_TOTAL_HITS_DISABLED;
             listener.onResponse(new SearchResponse(InternalSearchResponse.empty(withTotalHits), null, 0, 0, 0, buildTookInMillis(),
-                ShardSearchFailure.EMPTY_ARRAY, clusters,totalWaitTime,totalExecTime,numTask));
+                ShardSearchFailure.EMPTY_ARRAY, clusters,totalWaitTime,totalExecTime,numTask,queryTime,fetchTime,totalRewriteTime,totalNumberOfSegments));
             return;
         }
         executePhase(this);
@@ -221,7 +231,13 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
                     QuerySearchResult queryResult = it.queryResult();
                     totalExecTime += queryResult.getQueryExecTime();
                     totalWaitTime += queryResult.getQueryWaitTime();
+                    queryTime += queryResult.getQueryTime() + queryResult.getQueryExecTime() + queryResult.getQueryWaitTime();
+                    fetchTime += queryResult.getFetchExecTime();
+                    totalRewriteTime += queryResult.getRewriteTime();
+                    totalNumberOfSegments+=queryResult.getSegments();
+                    totalAggregationTime += queryResult.getBuildAggregationTime()+queryResult.getInitAggregationTime()+queryResult.getCollectAggregationTime();
                 }
+                InternalMappedTerms.setAggregationTime(totalAggregationTime);
             }
         }
     }
@@ -553,7 +569,7 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
                                                        String scrollId,
                                                        ShardSearchFailure[] failures) {
         return new SearchResponse(internalSearchResponse, scrollId, getNumShards(), successfulOps.get(),
-            skippedOps.get(), buildTookInMillis(), failures, clusters,totalWaitTime,totalExecTime,numTask);
+            skippedOps.get(), buildTookInMillis(), failures, clusters,totalWaitTime,totalExecTime,numTask,queryTime,fetchTime,totalRewriteTime,totalNumberOfSegments);
     }
 
     @Override

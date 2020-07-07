@@ -44,6 +44,7 @@ class AvgAggregator extends NumericMetricsAggregator.SingleValue {
 
     LongArray counts;
     DoubleArray sums;
+    LongArray Time;
     DoubleArray compensations;
     DocValueFormat format;
 
@@ -55,6 +56,7 @@ class AvgAggregator extends NumericMetricsAggregator.SingleValue {
         if (valuesSource != null) {
             final BigArrays bigArrays = context.bigArrays();
             counts = bigArrays.newLongArray(1, true);
+            Time = bigArrays.newLongArray(1, true);
             sums = bigArrays.newDoubleArray(1, true);
             compensations = bigArrays.newDoubleArray(1, true);
         }
@@ -79,12 +81,14 @@ class AvgAggregator extends NumericMetricsAggregator.SingleValue {
             @Override
             public void collect(int doc, long bucket) throws IOException {
                 counts = bigArrays.grow(counts, bucket + 1);
+                Time = bigArrays.grow(Time, bucket + 1);
                 sums = bigArrays.grow(sums, bucket + 1);
                 compensations = bigArrays.grow(compensations, bucket + 1);
 
                 if (values.advanceExact(doc)) {
                     final int valueCount = values.docValueCount();
                     counts.increment(bucket, valueCount);
+                    Time.increment(bucket, valueCount);
                     // Compute the sum of double values with Kahan summation algorithm which is more
                     // accurate than naive summation.
                     double sum = sums.get(bucket);
@@ -117,17 +121,17 @@ class AvgAggregator extends NumericMetricsAggregator.SingleValue {
         if (valuesSource == null || bucket >= sums.size()) {
             return buildEmptyAggregation();
         }
-        return new InternalAvg(name, sums.get(bucket), counts.get(bucket), format, pipelineAggregators(), metaData());
+        return new InternalAvg(name, sums.get(bucket), counts.get(bucket), Time.get(bucket),format, pipelineAggregators(), metaData());
     }
 
     @Override
     public InternalAggregation buildEmptyAggregation() {
-        return new InternalAvg(name, 0.0, 0L, format, pipelineAggregators(), metaData());
+        return new InternalAvg(name, 0.0, 0L,0L, format, pipelineAggregators(), metaData());
     }
 
     @Override
     public void doClose() {
-        Releasables.close(counts, sums, compensations);
+        Releasables.close(counts, sums, Time,compensations);
     }
 
 }

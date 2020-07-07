@@ -45,6 +45,8 @@ public abstract class InternalMappedTerms<A extends InternalTerms<A, B>, B exten
     protected Map<String, B> bucketMap;
 
     protected long docCountError;
+    public long aggregationTime;
+
 
     protected InternalMappedTerms(String name, BucketOrder order, int requiredSize, long minDocCount,
             List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData, DocValueFormat format, int shardSize,
@@ -79,6 +81,14 @@ public abstract class InternalMappedTerms<A extends InternalTerms<A, B>, B exten
         out.writeBoolean(showTermDocCountError);
         out.writeVLong(otherDocCount);
         out.writeList(buckets);
+    }
+
+    public static void setAggregationTime(long aggregationTime){
+        aggregationTime = aggregationTime;
+    }
+
+    public long getAggregationTime(){
+        return aggregationTime;
     }
 
     @Override
@@ -136,6 +146,6 @@ public abstract class InternalMappedTerms<A extends InternalTerms<A, B>, B exten
 
     @Override
     public final XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
-        return doXContentCommon(builder, params, docCountError, otherDocCount, buckets);
+        return doXContentCommon(builder, params, docCountError, otherDocCount,aggregationTime, buckets);
     }
 }

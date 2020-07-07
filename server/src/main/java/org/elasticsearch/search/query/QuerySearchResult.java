@@ -72,8 +72,30 @@ public final class QuerySearchResult extends SearchPhaseResult {
     private int nodeQueueSize = -1;
     private long queryWaitTime;
     private long queryExecTime;
-
+    private long queryTime;
+    private long buildAggregationTime;
+    private long fetchExecTime;
     private final boolean isNull;
+    private long rewriteTime;
+    private long rewriteScratch;
+    private long initAggregationTime;
+    private long collectAggregationTime;
+    private long segments;
+
+    public void startRewriteTime() {
+        assert rewriteScratch == 0;
+        rewriteScratch = System.currentTimeMillis();
+    }
+
+    public void stopAndAddRewriteTime() {
+        long time = Math.max(1, System.currentTimeMillis() - rewriteScratch);
+        rewriteTime += time;
+        rewriteScratch = 0;
+    }
+
+    public long getRewriteTime(){
+        return rewriteTime;
+    }
 
     public QuerySearchResult() {
         this(false);
@@ -109,7 +131,42 @@ public final class QuerySearchResult extends SearchPhaseResult {
     public void setQueryExecTime(long queryExecTime) {
         this.queryExecTime = queryExecTime;
     }
-
+    public void setBuildAggregationTime(long buildAggregationTime) {
+        this.buildAggregationTime = buildAggregationTime;
+    }
+    public long getBuildAggregationTime() {
+        return buildAggregationTime;
+    }
+    public void setInitAggregationTime(long initAggregationTime) {
+        this.initAggregationTime = initAggregationTime;
+    }
+    public long getInitAggregationTime() {
+        return initAggregationTime;
+    }
+    public void setCollectAggregationTime(long collectAggregationTime) {
+        this.collectAggregationTime = collectAggregationTime;
+    }
+    public long getCollectAggregationTime() {
+        return collectAggregationTime;
+    }
+    public long getFetchExecTime() {
+        return fetchExecTime;
+    }
+    public void setFetchExecTime(long queryExecTime) {
+        this.queryExecTime = queryExecTime;
+    }
+    public void setQueryTime(long queryTime) {
+        this.queryTime = queryTime;
+    }
+    public long getQueryTime() {
+        return queryTime;
+    }
+    public void setSegments(long segments) {
+        this.segments = segments;
+    }
+    public long getSegments(){
+        return segments;
+    }
     private QuerySearchResult(boolean isNull) {
         this.isNull = isNull;
     }
