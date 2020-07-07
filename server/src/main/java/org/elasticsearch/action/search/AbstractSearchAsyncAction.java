@@ -44,6 +44,8 @@ import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.internal.ShardSearchRequest;
 import org.elasticsearch.transport.Transport;
 import org.elasticsearch.search.query.QuerySearchResult;
+import org.elasticsearch.search.aggregations.bucket.terms.InternalMappedTerms;
+
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -237,6 +239,7 @@ abstract class AbstractSearchAsyncAction<Result extends SearchPhaseResult> exten
                     totalNumberOfSegments+=queryResult.getSegments();
                     totalAggregationTime += queryResult.getBuildAggregationTime()+queryResult.getInitAggregationTime()+queryResult.getCollectAggregationTime();
                 }
+                InternalMappedTerms.setAggregationTime(totalAggregationTime);
             }
         }
     }
